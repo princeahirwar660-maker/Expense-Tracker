@@ -1,37 +1,86 @@
-# SpendSmart – Static Finance Tracker
+# SpendSmart
 
-A fully client-side personal finance tracker. No server, no backend, no database — runs entirely in your browser using `localStorage`.
+Personal finance tracker — Flask backend + vanilla JS frontend, all in one repo.
+Flask serves both the HTML frontend and the REST API from the same server.
 
-## Live Demo
-Deploy on GitHub Pages and share the link.
+## Repo Structure
 
-## Features
-- **Dashboard** — Income vs expenses, spending trend chart, category donut chart, recent transactions
-- **Expenses** — Add, edit, delete, search, filter by category, sort, paginate
-- **Income** — Add, edit, delete, search, sort, paginate
-- **Goals** — Set savings targets, track progress, add funds
-- **Analytics** — Pie chart, 6-month bar chart, category breakdown table
-- **Report** — Date-range income/expense report with print/export
+```
+SpendSmart/
+├── app.py              ← Flask app (API + serves frontend)
+├── init_db.py          ← Run once to create DB
+├── requirements.txt
+├── Procfile            ← For Render
+├── render.yaml         ← One-click Render config
+├── .gitignore
+├── static/
+│   ├── style.css
+│   └── app.js
+└── templates/
+    └── index.html
+```
 
-## How to Deploy on GitHub Pages
+## Run Locally
 
-1. Create a new GitHub repo
-2. Upload `index.html`, `style.css`, `app.js`
-3. Go to repo **Settings → Pages → Source → main branch → / (root)**
-4. Click Save — your app is live at `https://<username>.github.io/<repo-name>`
+```bash
+# 1. Create virtual environment
+python -m venv venv
+source venv/bin/activate        # Windows: venv\Scripts\activate
 
-## Local Development
+# 2. Install dependencies
+pip install -r requirements.txt
 
-Just open `index.html` in any browser. No build step, no npm, no Python needed.
+# 3. Create the database (only needed once)
+python init_db.py
 
-## Data Storage
+# 4. Start the server
+python app.py
+```
 
-All data is saved in your browser's `localStorage`. It does **not** sync across devices or browsers. Clearing site data in your browser will erase it.
+Open `http://localhost:5000` in your browser. Register an account and start tracking.
 
-Demo data is automatically seeded when you register a new account.
+## Deploy to Render (free)
+
+1. Push this repo to GitHub
+2. Go to [render.com](https://render.com) → **New + → Web Service**
+3. Connect your GitHub repo
+4. Render auto-detects the settings from `render.yaml`
+5. Click **Deploy**
+
+Your app will be live at `https://spendsmart-xxxx.onrender.com` in about 2 minutes.
+
+> **Note:** Render's free tier has an ephemeral filesystem — the SQLite database
+> resets on every redeploy. Your data survives server restarts but not new deployments.
+> For persistent data, add a free PostgreSQL database on Render and update the
+> connection in `app.py` (swap `sqlite3` for `psycopg2`).
+
+## API Endpoints
+
+All `/api/*` routes require `Authorization: Bearer <token>` except register, login, and health.
+
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/health` | Health check |
+| POST | `/api/auth/register` | Register |
+| POST | `/api/auth/login` | Login → returns JWT |
+| GET | `/api/expenses` | List expenses |
+| POST | `/api/expenses` | Add expense |
+| PUT | `/api/expenses/:id` | Update expense |
+| DELETE | `/api/expenses/:id` | Delete expense |
+| GET | `/api/income` | List income |
+| POST | `/api/income` | Add income |
+| PUT | `/api/income/:id` | Update income |
+| DELETE | `/api/income/:id` | Delete income |
+| GET | `/api/goals` | List goals |
+| POST | `/api/goals` | Add goal |
+| PUT | `/api/goals/:id` | Update goal |
+| POST | `/api/goals/:id/add` | Add amount to goal |
+| DELETE | `/api/goals/:id` | Delete goal |
+| GET | `/api/summary?period=month` | Dashboard stats |
 
 ## Tech Stack
-- Vanilla HTML, CSS, JavaScript (ES6+)
-- Chart.js 4.4 (CDN)
-- Font Awesome 6.5 (CDN)
-- Inter font (Google Fonts CDN)
+
+- **Backend:** Python 3, Flask, SQLite, PyJWT, bcrypt, gunicorn
+- **Frontend:** Vanilla JS (ES6+), Chart.js 4.4, Font Awesome 6.5, Inter font
+- **Auth:** JWT tokens (48h expiry), bcrypt password hashing
+- **Deploy:** Render (one repo, one service, free tier)
